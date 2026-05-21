@@ -10,7 +10,6 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - echo Building Docker image using absolute path context...
       - docker build -t $REPOSITORY_URL:latest -f my-web-app/Dockerfile my-web-app/
       - docker tag $REPOSITORY_URL:latest $REPOSITORY_URL:$IMAGE_TAG
   post_build:
@@ -19,12 +18,9 @@ phases:
       - echo Pushing the Docker image...
       - docker push $REPOSITORY_URL:latest
       - docker push $REPOSITORY_URL:$IMAGE_TAG
-      - echo Fetching real RDS endpoint address...
-      # ĐÃ FIX CHỐT HẠ: Đổi tên identifier thành production-ecs-postgres cho khớp với hạ tầng
-      - RDS_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier production-ecs-postgres --query "DBInstances[0].Endpoint.Address" --output text)
-      - echo Writing image and DB definitions file...
+      - echo Updating Task Definition with current Image Tag...
+      # CHỈ thay thế Image URL, còn biến môi trường DB đã có Terraform lo dưới local!
       - sed -i "s|<IMAGE_PLACEHOLDER>|$REPOSITORY_URL:$IMAGE_TAG|g" my-web-app/taskdef.json
-      - sed -i "s|<DB_HOST_PLACEHOLDER>|$RDS_ENDPOINT|g" my-web-app/taskdef.json
 
 artifacts:
   files:
