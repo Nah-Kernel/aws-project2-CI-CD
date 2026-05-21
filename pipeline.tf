@@ -1,16 +1,13 @@
-# 1. Khởi tạo một Kết nối an toàn đến GitHub (Version 2)
-# Sau khi chạy lệnh terraform apply, bạn chỉ cần lên AWS Console bấm "Handshake/Xác nhận" kết nối này 1 lần duy nhất.
 resource "aws_codestarconnections_connection" "github" {
   name          = "${var.environment}-github-conn"
   provider_type = "GitHub"
 }
 
-# 2. CodeBuild Project phục vụ build Docker image
+# 1. SỬA CODEBUILD PROJECT: Ép region CloudWatch về chữ thường
 resource "aws_codebuild_project" "build" {
   name         = "${var.environment}-codebuild"
   service_role = aws_iam_role.codebuild_role.arn
 
-  # SỬA LỖI: Chuyển về đúng cú pháp block cho artifacts
   artifacts {
     type = "CODEPIPELINE"
   }
@@ -19,7 +16,7 @@ resource "aws_codebuild_project" "build" {
     compute_type                = "BUILD_GENERAL1_SMALL"
     image                       = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
     type                        = "LINUX_CONTAINER"
-    privileged_mode             = true # BẮT BUỘC ĐỂ BUILD DOCKER TRONG DOCKER
+    privileged_mode             = true 
     image_pull_credentials_type = "CODEBUILD"
 
     environment_variable {
@@ -34,7 +31,6 @@ resource "aws_codebuild_project" "build" {
   }
 }
 
-# 3. S3 Artifact Bucket cho Pipeline (Tự động tạo hậu tố ngẫu nhiên để tránh trùng tên toàn cầu)
 resource "random_string" "suffix" {
   length  = 6
   special = false
@@ -46,7 +42,7 @@ resource "aws_s3_bucket" "pipeline_bucket" {
   force_destroy = true
 }
 
-# 4. AWS CodePipeline định nghĩa luồng CI/CD hoàn chỉnh
+# 2. SỬA CODEPIPELINE: Khai báo tường minh Region chữ thường cho TẤT CẢ các Stage Action
 resource "aws_codepipeline" "pipeline" {
   name     = "${var.environment}-full-pipeline"
   role_arn = aws_iam_role.codebuild_role.arn 
@@ -62,14 +58,16 @@ resource "aws_codepipeline" "pipeline" {
       name             = "SourceAction"
       category         = "Source"
       owner            = "AWS"
-      provider         = "CodeStarConnections" # Nâng cấp lên kết nối bảo mật V2
-      version          = "2"
+      provider         = "CodeStarSourceConnection" # ĐÃ FIX: Sai tên provider
+      version          = "1"                         # ĐÃ FIX: CodeStarConnection dùng version 1
       output_artifacts = ["source_output"]
+      region           = "ap-southeast-1"
 
       configuration = {
-        ConnectionArn    = aws_codestarconnections_connection.github.arn
-        FullRepositoryId = "${var.github_repo_owner}/${var.github_repo_name}"
-        BranchName       = var.github_branch
+        ConnectionArn        = aws_codestarconnections_connection.github.arn
+        FullRepositoryId     = "${var.github_repo_owner}/${var.github_repo_name}"
+        BranchName           = var.github_branch
+        OutputArtifactFormat = "CODE_ZIP"            # ĐÃ FIX: Bắt buộc để đóng gói mã nguồn từ GitHub
       }
     }
   }
@@ -84,6 +82,7 @@ resource "aws_codepipeline" "pipeline" {
       input_artifacts  = ["source_output"]
       output_artifacts = ["build_output"]
       version          = "1"
+      region           = "ap-southeast-1"
 
       configuration = {
         ProjectName = aws_codebuild_project.build.name
@@ -100,12 +99,16 @@ resource "aws_codepipeline" "pipeline" {
       provider        = "CodeDeployToECS"
       input_artifacts = ["build_output"]
       version         = "1"
+      region          = "ap-southeast-1"
 
       configuration = {
         ApplicationName                = "AppECS-${aws_ecs_cluster.main.name}"
         DeploymentGroupName            = "DgpECS-${aws_ecs_service.main.name}"
         TaskDefinitionTemplateArtifact = "build_output"
         AppSpecTemplateArtifact        = "build_output"
+        # ĐÃ FIX CHỐT HẠ: Định nghĩa tường minh file cấu hình để hệ thống không bốc nhầm chuỗi trống
+        TaskDefinitionTemplatePath     = "taskdef.json"
+        AppSpecTemplatePath            = "appspec.yaml"
       }
     }
   }
