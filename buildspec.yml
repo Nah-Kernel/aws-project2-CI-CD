@@ -9,8 +9,7 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      # ĐÃ FIX: Chui hẳn vào thư mục con, build cục bộ tại đó (.) để ăn khớp Context với Dockerfile gốc
-      - cd my-web-app && docker build -t $REPOSITORY_URL:latest . && cd .&& cd . cd ...
+      - cd my-web-app && docker build -t $REPOSITORY_URL:latest . && cd ..
   post_build:
     commands:
       - echo Build completed on `date`
