@@ -10,9 +10,9 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - echo Building Docker image inside my-web-app directory...
-      # Chạy lệnh build đúng ngữ cảnh thư mục chứa Dockerfile
-      - cd my-web-app && docker build -t $REPOSITORY_URL:latest .
+      - echo Building Docker image using absolute path context...
+      # ĐÃ FIX: Đứng tại gốc để build, trỏ file Dockerfile vào trong, nhưng gán Context là thư mục con my-web-app/ để sao chép file chuẩn
+      - docker build -t $REPOSITORY_URL:latest -f my-web-app/Dockerfile my-web-app/
       - docker tag $REPOSITORY_URL:latest $REPOSITORY_URL:$IMAGE_TAG
   post_build:
     commands:
@@ -21,13 +21,11 @@ phases:
       - docker push $REPOSITORY_URL:latest
       - docker push $REPOSITORY_URL:$IMAGE_TAG
       - echo Writing image definitions file...
-      # ĐÃ FIX CHỐT HẠ: Ép lệnh sed chọc thẳng vào bên trong thư mục con my-web-app để sửa file
+      # ĐÃ FIX CHỐT HẠ: Chắc chắn đang đứng ở gốc, chọc thẳng vào sửa file taskdef.json trong thư mục con
       - sed -i "s|<IMAGE_PLACEHOLDER>|$REPOSITORY_URL:$IMAGE_TAG|g" my-web-app/taskdef.json
 
 artifacts:
-  # ĐÃ FIX CHỐT HẠ: Khai báo tường minh cho CodePipeline bốc 2 file cấu hình cốt lõi nằm trong thư mục con để bàn giao sang khối Deploy
   files:
     - my-web-app/taskdef.json
     - my-web-app/appspec.yaml
-  # Loại bỏ lớp bọc thư mục rác để khi CodeDeploy giải nén ra sẽ thấy 2 file này ở lớp ngoài cùng của gói Artifact
   discard-paths: yes
