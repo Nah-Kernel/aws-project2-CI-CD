@@ -102,11 +102,11 @@ resource "aws_codepipeline" "pipeline" {
       region          = "ap-southeast-1"
 
       configuration = {
-        ApplicationName                = "AppECS-${aws_ecs_cluster.main.name}"
-        DeploymentGroupName            = "DgpECS-${aws_ecs_service.main.name}"
+        # ĐÃ FIX CHỐT HẠ: Tham chiếu trực tiếp đến thuộc tính của resource, tự động khớp 100% không lo gõ sai chính tả
+        ApplicationName                = aws_codedeploy_app.ecs_app.name
+        DeploymentGroupName            = aws_codedeploy_deployment_group.ecs_dgp.deployment_group_name
         TaskDefinitionTemplateArtifact = "build_output"
         AppSpecTemplateArtifact        = "build_output"
-        # ĐÃ FIX CHỐT HẠ: Định nghĩa tường minh file cấu hình để hệ thống không bốc nhầm chuỗi trống
         TaskDefinitionTemplatePath     = "taskdef.json"
         AppSpecTemplatePath            = "appspec.yaml"
       }
