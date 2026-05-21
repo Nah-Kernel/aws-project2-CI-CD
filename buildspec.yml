@@ -11,7 +11,6 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building Docker image using absolute path context...
-      # ĐÃ FIX: Đứng tại gốc để build, trỏ file Dockerfile vào trong, nhưng gán Context là thư mục con my-web-app/ để sao chép file chuẩn
       - docker build -t $REPOSITORY_URL:latest -f my-web-app/Dockerfile my-web-app/
       - docker tag $REPOSITORY_URL:latest $REPOSITORY_URL:$IMAGE_TAG
   post_build:
@@ -21,10 +20,9 @@ phases:
       - docker push $REPOSITORY_URL:latest
       - docker push $REPOSITORY_URL:$IMAGE_TAG
       - echo Fetching real RDS endpoint address...
-      # Lấy trực tiếp Endpoint từ AWS CLI để đảm bảo độ chính xác tuyệt đối
-      - RDS_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier production-postgres --query "DBInstances[0].Endpoint.Address" --output text)
+      # ĐÃ FIX CHỐT HẠ: Đổi tên identifier thành production-ecs-postgres cho khớp với hạ tầng
+      - RDS_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier production-ecs-postgres --query "DBInstances[0].Endpoint.Address" --output text)
       - echo Writing image and DB definitions file...
-      # Thay thế cả Image URL lẫn DB Host
       - sed -i "s|<IMAGE_PLACEHOLDER>|$REPOSITORY_URL:$IMAGE_TAG|g" my-web-app/taskdef.json
       - sed -i "s|<DB_HOST_PLACEHOLDER>|$RDS_ENDPOINT|g" my-web-app/taskdef.json
 
