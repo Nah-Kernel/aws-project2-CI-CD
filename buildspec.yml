@@ -9,15 +9,14 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      # ĐÃ FIX: Di chuyển vào thư mục con chứa source code rồi mới tiến hành build Docker
-      - cd my-web-app && docker build -t $REPOSITORY_URL:latest . && cd ..
+      # ĐÃ FIX: cd .. chuẩn xác 2 dấu chấm để quay lui hợp lệ trong Linux
+      - docker build -t $REPOSITORY_URL:latest -f my-web-app/Dockerfile .
   post_build:
     commands:
       - echo Build completed on `date`
       - echo Pushing the Docker image...
       - docker push $REPOSITORY_URL:latest
       - echo Copying deployment files to root...
-      # ĐÃ FIX: Sao chép các file cấu hình Artifacts ra ngoài root để bàn giao cho khối Deploy
       - cp my-web-app/appspec.yaml .
       - cp my-web-app/taskdef.json .
       - printf '[{"name":"web-container","imageUri":"%s"}]' $REPOSITORY_URL:latest > imagedefinitions.json
