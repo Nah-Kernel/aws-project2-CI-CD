@@ -1,0 +1,32 @@
+{
+  "executionRoleArn": "arn:aws:iam::779035457035:role/production-ecs-task-execution-role",
+  "taskRoleArn": "arn:aws:iam::779035457035:role/production-ecs-task-role",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "512",
+  "containerDefinitions": [
+    {
+      "name": "web-container",
+      "image": "<IMAGE_PLACEHOLDER>",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/production-app",
+          "awslogs-region": "ap-southeast-1",
+          "awslogs-stream-prefix": "web"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+# Chặn thư mục chứa plugin và bộ cài của Terraform
+.terraform/
+
+# Chặn các file lưu trạng thái hạ tầng (chứa password clear-text nội bộ)
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+
+# Chặn file chứa giá trị biến thật của cá nhân bạn (QUAN TRỌNG NHẤT)
+*.tfvars
+*.tfvars.json
+
+# Chặn các file cấu hình biến môi trường local nếu có
+.env
+
+# Chặn các file log hệ thống khi lệnh bị crash
+*.log
