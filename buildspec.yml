@@ -10,9 +10,12 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - echo Building the Docker image...
-      - docker build -t $REPOSITORY_URL:latest -f my-web-app/Dockerfile .
+      - echo Moving into app directory and building Docker image...
+      # ĐÃ FIX: Di chuyển vào đúng thư mục chứa source code app trước khi chạy lệnh docker build
+      - cd my-web-app
+      - docker build -t $REPOSITORY_URL:latest .
       - docker tag $REPOSITORY_URL:latest $REPOSITORY_URL:$IMAGE_TAG
+      - cd .. # Quay trở lại thư mục gốc để làm việc với các file cấu hình hạ tầng
   post_build:
     commands:
       - echo Build completed on `date`
@@ -20,10 +23,9 @@ phases:
       - docker push $REPOSITORY_URL:latest
       - docker push $REPOSITORY_URL:$IMAGE_TAG
       - echo Writing image definitions file...
-      # ĐÃ FIX CHỐT HẠ: Dùng lệnh sed để tráo đổi chữ <IMAGE_PLACEHOLDER> bằng URL ECR xịn có kèm TAG commit
+      # ĐÃ FIX: Thay thế placeholder trong file taskdef.json ở cả 2 vị trí để CodeDeploy không bị đói file
       - sed -i "s|<IMAGE_PLACEHOLDER>|$REPOSITORY_URL:$IMAGE_TAG|g" taskdef.json
-      # Sao chép file sang thư mục con nếu pipeline của bạn gọi trong thư mục con
-      - cp taskdef.json my-web-app/taskdef.json || echo "No subfolder"
+      - sed -i "s|<IMAGE_PLACEHOLDER>|$REPOSITORY_URL:$IMAGE_TAG|g" my-web-app/taskdef.json
 
 artifacts:
   files:
