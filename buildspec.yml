@@ -5,23 +5,29 @@ phases:
     commands:
       - echo Logging in to Amazon ECR...
       - aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin $REPOSITORY_URL
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
   build:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - cd my-web-app && docker build -t $REPOSITORY_URL:latest . && cd ..
+      - docker build -t $REPOSITORY_URL:latest -f my-web-app/Dockerfile .
+      - docker tag $REPOSITORY_URL:latest $REPOSITORY_URL:$IMAGE_TAG
   post_build:
     commands:
       - echo Build completed on `date`
       - echo Pushing the Docker image...
       - docker push $REPOSITORY_URL:latest
-      - echo Copying deployment files to root...
-      - cp my-web-app/appspec.yaml .
-      - cp my-web-app/taskdef.json .
-      - printf '[{"name":"web-container","imageUri":"%s"}]' $REPOSITORY_URL:latest > imagedefinitions.json
+      - docker push $REPOSITORY_URL:$IMAGE_TAG
+      - echo Writing image definitions file...
+      # ĐÃ FIX CHỐT HẠ: Dùng lệnh sed để tráo đổi chữ <IMAGE_PLACEHOLDER> bằng URL ECR xịn có kèm TAG commit
+      - sed -i "s|<IMAGE_PLACEHOLDER>|$REPOSITORY_URL:$IMAGE_TAG|g" taskdef.json
+      # Sao chép file sang thư mục con nếu pipeline của bạn gọi trong thư mục con
+      - cp taskdef.json my-web-app/taskdef.json || echo "No subfolder"
 
 artifacts:
   files:
-    - imagedefinitions.json
-    - appspec.yaml
     - taskdef.json
+    - appspec.yaml
+    - my-web-app/taskdef.json
+    - my-web-app/appspec.yaml
