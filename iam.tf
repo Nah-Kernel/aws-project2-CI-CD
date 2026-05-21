@@ -103,12 +103,22 @@ resource "aws_iam_role_policy" "codebuild_policy" {
           "ecs:DescribeServices",
           "ecs:UpdateService",
           "codestar-connections:UseConnection",
-          # ĐÃ FIX: Cấp quyền cho phép Pipeline kích hoạt và quản lý luồng chạy bên CodeBuild Project
           "codebuild:StartBuild",
           "codebuild:StopBuild",
           "codebuild:BatchGetBuilds"
         ]
         Resource = "*"
+      },
+      # ĐÃ FIX CHỐT HẠ: Cấp đặc quyền PassRole cho phép dịch vụ bàn giao quyền cho ECS Task
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:PassRole"
+        ]
+        Resource = [
+          "arn:aws:iam::779035457035:role/production-ecs-task-role",
+          "arn:aws:iam::779035457035:role/production-ecs-task-execution-role"
+        ]
       }
     ]
   })
