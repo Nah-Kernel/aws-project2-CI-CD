@@ -98,6 +98,8 @@ resource "aws_iam_role_policy" "codebuild_policy" {
           "codedeploy:RegisterApplicationRevision",
           "codedeploy:GetDeployment",
           "codedeploy:CreateDeployment",
+          # ĐÃ FIX CHỐT HẠ: Bổ sung quyền đọc cấu hình chiến lược Deployment
+          "codedeploy:GetDeploymentConfig", 
           "ecs:RegisterTaskDefinition",
           "ecs:DescribeTaskDefinition",
           "ecs:DescribeServices",
@@ -109,7 +111,6 @@ resource "aws_iam_role_policy" "codebuild_policy" {
         ]
         Resource = "*"
       },
-      # ĐÃ FIX CHỐT HẠ: Cấp đặc quyền PassRole cho phép dịch vụ bàn giao quyền cho ECS Task
       {
         Effect = "Allow"
         Action = [
