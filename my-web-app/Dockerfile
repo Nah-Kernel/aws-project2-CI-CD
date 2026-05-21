@@ -2,9 +2,10 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+# ĐÃ FIX TẬN GỐC: Dùng npm install để không bao giờ bị gãy do thiếu package-lock.json
+RUN npm install --only=production
 
-# Stage 2: Runtime Environment (Bảo mật tối đa, loại bỏ file rác)
+# Stage 2: Runtime Environment
 FROM node:18-alpine
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
