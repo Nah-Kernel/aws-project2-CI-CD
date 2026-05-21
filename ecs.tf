@@ -29,7 +29,7 @@ resource "aws_ecs_task_definition" "app" {
       logDriver = "awslogs"
       options = {
         "awslogs-group"         = "/ecs/${var.environment}-app"
-        "awslogs-region"        = var.aws_region
+        "awslogs-region"        = lower(var.aws_region)
         "awslogs-stream-prefix" = "web"
       }
     }
@@ -67,6 +67,14 @@ resource "aws_ecs_service" "main" {
 
   deployment_controller {
     type = "CODE_DEPLOY" # Ủy quyền kiểm soát Deployment cho AWS CodeDeploy (phục vụ Blue/Green)
+  }
+
+  # ĐÃ FIX: Bẻ gãy xung đột, cấm Terraform đè lên các thay đổi do CodeDeploy tự hoán đổi khi chạy luồng Blue/Green
+  lifecycle {
+    ignore_changes = [
+      task_definition,
+      load_balancer
+    ]
   }
 
   depends_on = [aws_lb_listener.http]

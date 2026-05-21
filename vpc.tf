@@ -51,17 +51,12 @@ resource "aws_nat_gateway" "nat" {
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
   route {
-    cidr_block = "0.0.0.0/24" # Lỗi cố ý cấu hình sai CIDR để test Mindset Recon/Troubleshoot
+    cidr_block = "0.0.0.0/0" # Lỗi cố ý cấu hình sai CIDR để test Mindset Recon/Troubleshoot
     gateway_id = aws_internet_gateway.igw.id
   }
   tags = { Name = "${var.environment}-public-rt" }
 }
 
-# SỬA LỖI CẤU HÌNH TRÊN: Route table đúng phải là 0.0.0.0/0. Sẽ được giải thích ở phần troubleshoot.
-resource "aws_route_table_replacement" "public_correct" {
-  # Đảm bảo dùng route đúng trong thực tế:
-  # route { cidr_block = "0.0.0.0/0", gateway_id = aws_internet_gateway.igw.id }
-}
 
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
@@ -75,12 +70,12 @@ resource "aws_route_table" "private" {
 # Route Table Associations
 resource "aws_route_table_association" "public" {
   count          = length(var.public_subnet_cidrs)
-  subnet_id      = aws_subnet.public[count.index]
+  subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
 }
 
 resource "aws_route_table_association" "private" {
   count          = length(var.private_subnet_cidrs)
-  subnet_id      = aws_subnet.private[count.index]
+  subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
 }

@@ -1,4 +1,5 @@
 {
+  "family": "production-task",
   "executionRoleArn": "arn:aws:iam::779035457035:role/production-ecs-task-execution-role",
   "taskRoleArn": "arn:aws:iam::779035457035:role/production-ecs-task-role",
   "networkMode": "awsvpc",

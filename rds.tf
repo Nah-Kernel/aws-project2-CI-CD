@@ -9,7 +9,7 @@ resource "aws_db_instance" "postgres" {
   allocated_storage      = 20
   max_allocated_storage  = 100
   engine                 = "postgres"
-  engine_version         = "15.4"
+  engine_version         = "15"
   instance_class         = "db.t3.micro" # Tiết kiệm chi phí AWS Academy/Free Tier
   db_name                = "webappdb"
   username               = "db_admin"
