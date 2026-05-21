@@ -20,9 +20,13 @@ phases:
       - echo Pushing the Docker image...
       - docker push $REPOSITORY_URL:latest
       - docker push $REPOSITORY_URL:$IMAGE_TAG
-      - echo Writing image definitions file...
-      # ĐÃ FIX CHỐT HẠ: Chắc chắn đang đứng ở gốc, chọc thẳng vào sửa file taskdef.json trong thư mục con
+      - echo Fetching real RDS endpoint address...
+      # Lấy trực tiếp Endpoint từ AWS CLI để đảm bảo độ chính xác tuyệt đối
+      - RDS_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier production-postgres --query "DBInstances[0].Endpoint.Address" --output text)
+      - echo Writing image and DB definitions file...
+      # Thay thế cả Image URL lẫn DB Host
       - sed -i "s|<IMAGE_PLACEHOLDER>|$REPOSITORY_URL:$IMAGE_TAG|g" my-web-app/taskdef.json
+      - sed -i "s|<DB_HOST_PLACEHOLDER>|$RDS_ENDPOINT|g" my-web-app/taskdef.json
 
 artifacts:
   files:

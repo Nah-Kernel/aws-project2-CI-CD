@@ -20,6 +20,18 @@
           "protocol": "tcp"
         }
       ],
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "DB_HOST", "value": "<DB_HOST_PLACEHOLDER>" },
+        { "name": "DB_USER", "value": "db_admin" },
+        { "name": "DB_NAME", "value": "webappdb" }
+      ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
