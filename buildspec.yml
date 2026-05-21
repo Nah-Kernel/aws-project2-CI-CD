@@ -10,12 +10,10 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - echo Moving into app directory and building Docker image...
-      # ĐÃ FIX: Di chuyển vào đúng thư mục chứa source code app trước khi chạy lệnh docker build
-      - cd my-web-app
-      - docker build -t $REPOSITORY_URL:latest .
+      - echo Building Docker image inside my-web-app directory...
+      # Chạy lệnh build đúng ngữ cảnh thư mục chứa Dockerfile
+      - cd my-web-app && docker build -t $REPOSITORY_URL:latest .
       - docker tag $REPOSITORY_URL:latest $REPOSITORY_URL:$IMAGE_TAG
-      - cd .. # Quay trở lại thư mục gốc để làm việc với các file cấu hình hạ tầng
   post_build:
     commands:
       - echo Build completed on `date`
@@ -23,13 +21,13 @@ phases:
       - docker push $REPOSITORY_URL:latest
       - docker push $REPOSITORY_URL:$IMAGE_TAG
       - echo Writing image definitions file...
-      # ĐÃ FIX: Thay thế placeholder trong file taskdef.json ở cả 2 vị trí để CodeDeploy không bị đói file
-      - sed -i "s|<IMAGE_PLACEHOLDER>|$REPOSITORY_URL:$IMAGE_TAG|g" taskdef.json
+      # ĐÃ FIX CHỐT HẠ: Ép lệnh sed chọc thẳng vào bên trong thư mục con my-web-app để sửa file
       - sed -i "s|<IMAGE_PLACEHOLDER>|$REPOSITORY_URL:$IMAGE_TAG|g" my-web-app/taskdef.json
 
 artifacts:
+  # ĐÃ FIX CHỐT HẠ: Khai báo tường minh cho CodePipeline bốc 2 file cấu hình cốt lõi nằm trong thư mục con để bàn giao sang khối Deploy
   files:
-    - taskdef.json
-    - appspec.yaml
     - my-web-app/taskdef.json
     - my-web-app/appspec.yaml
+  # Loại bỏ lớp bọc thư mục rác để khi CodeDeploy giải nén ra sẽ thấy 2 file này ở lớp ngoài cùng của gói Artifact
+  discard-paths: yes
