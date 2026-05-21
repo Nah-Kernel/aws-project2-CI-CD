@@ -54,18 +54,24 @@ resource "aws_iam_role" "ecs_task_role" {
 # Quyền cho CodeBuild và CodePipeline
 resource "aws_iam_role" "codebuild_role" {
   name = "${var.environment}-codebuild-role"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Action    = "sts:AssumeRole"
       Effect    = "Allow"
-      Principal = { Service = "codebuild.amazonaws.com" }
+      Principal = { 
+        Service = [
+          "codebuild.amazonaws.com",
+          "codepipeline.amazonaws.com" # Cho phép cả CodePipeline mượn Role này
+        ]
+      }
     }]
   })
 }
 
 resource "aws_iam_role_policy" "codebuild_policy" {
-  name = "CodeBuildMinimalPolicy"
+  name = "CodeBuildAndPipelineExecutionPolicy"
   role = aws_iam_role.codebuild_role.id
   policy = jsonencode({
     Version = "2012-10-17"
@@ -86,7 +92,34 @@ resource "aws_iam_role_policy" "codebuild_policy" {
           "ecr:PutImage",
           "s3:GetObject",
           "s3:GetObjectVersion",
-          "s3:PutObject"
+          "s3:PutObject",
+          "s3:GetBucketLocation",
+          "s3:ListBucket"
+        ]
+        Resource = "*"
+      },
+      # ĐÃ FIX: Cho phép CodePipeline sử dụng Connection để kết nối GitHub lấy code
+      {
+        Effect = "Allow"
+        Action = [
+          "codestar-connections:UseConnection"
+        ]
+        Resource = "*"
+      },
+      # ĐÃ FIX: Bổ sung các quyền để Pipeline tương tác được với CodeBuild và trigger luồng CodeDeploy Blue/Green
+      {
+        Effect = "Allow"
+        Action = [
+          "codebuild:StartBuild",
+          "codebuild:BatchGetBuilds",
+          "codedeploy:CreateDeployment",
+          "codedeploy:GetDeployment",
+          "codedeploy:GetDeploymentConfig",
+          "codedeploy:RegisterApplicationRevision",
+          "ecs:RegisterTaskDefinition",
+          "ecs:DescribeTaskDefinition",
+          "ecs:DescribeServices",
+          "iam:PassRole"
         ]
         Resource = "*"
       }
